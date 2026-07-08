@@ -1,0 +1,106 @@
+# ==============================================================================
+# SecureWipe Enterprise - Master Monorepo .gitignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Dependency Directories
+# ------------------------------------------------------------------------------
+# Node.js dependencies
+node_modules/
+**/node_modules/
+jspm_packages/
+web_modules/
+
+# ------------------------------------------------------------------------------
+# 2. Build Outputs and Generated Files
+# ------------------------------------------------------------------------------
+# Production build assets
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# ------------------------------------------------------------------------------
+# 3. Environment Variables and Sensitive Information
+# ------------------------------------------------------------------------------
+# Local environment configs (must never be committed to repository)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.env
+**/.env
+**/.env.*
+
+# Backup and security keys
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+
+# Database configuration and local SQLite engines
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite3-journal
+
+# ------------------------------------------------------------------------------
+# 4. Logs and Diagnostic Outputs
+# ------------------------------------------------------------------------------
+# Diagnostic trace files and process manager logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# 5. IDE and Editor Specific Metadata
+# ------------------------------------------------------------------------------
+# VS Code configuration
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# IntelliJ / WebStorm / PhpStorm
+.idea/
+
+# Developer Assistants and AI Agent Caches
+.gemini/
+.antigravity/
+.agents/
+bin/
+
+# ------------------------------------------------------------------------------
+# 6. Operating System Artifacts
+# ------------------------------------------------------------------------------
+# Windows-specific system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS-specific system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ------------------------------------------------------------------------------
+# 7. Coverage and Testing Outputs
+# ------------------------------------------------------------------------------
+coverage/
+**/coverage/
+.nyc_output/
