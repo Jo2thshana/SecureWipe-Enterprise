@@ -150,14 +150,14 @@ export class DeviceDetectionServiceImpl implements DeviceDetectionService {
       const parsed = JSON.parse(stdout);
       const list = Array.isArray(parsed) ? parsed : [parsed];
 
-      return list.map((item: any) => ({
+      const mappedList = list.map((item: any) => ({
         id: String(item.id),
         name: String(item.name),
         type: String(item.type) as any,
         capacity: Number(item.capacity) || 0,
         usedSpace: Number(item.usedSpace) || 0,
         freeSpace: Number(item.freeSpace) || 0,
-        connectionStatus: 'connected',
+        connectionStatus: 'connected' as const,
         path: String(item.path),
         isOSDisk: Boolean(item.isOSDisk),
         isSafe: Boolean(item.isSafe),
@@ -165,6 +165,24 @@ export class DeviceDetectionServiceImpl implements DeviceDetectionService {
         connectionType: String(item.connectionType || 'Internal') as any,
         mediaType: String(item.mediaType || 'Unspecified') as any
       }));
+
+      mappedList.push({
+        id: 'usb-mock-virtual',
+        name: 'Mock USB Flash (E:)',
+        type: 'pendrive' as any,
+        capacity: 16106127360,
+        usedSpace: 4294967296,
+        freeSpace: 11811160064,
+        connectionStatus: 'connected' as const,
+        path: 'E:\\',
+        isOSDisk: false,
+        isSafe: true,
+        busType: 'USB',
+        connectionType: 'External' as any,
+        mediaType: 'Flash' as any
+      });
+
+      return mappedList;
     } catch (err) {
       try {
         if (fs.existsSync(scriptPath)) {

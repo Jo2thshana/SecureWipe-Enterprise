@@ -40,7 +40,11 @@ export default function FileExplorer({ onWipeSelect }) {
       setLoadingPaths({});
     } catch (err) {
       console.error('[FileExplorer] Failed to load root files:', err);
-      setError(err.response?.data?.error || 'Failed to read directory structure from device. Ensure it is connected and readable.');
+      const errorData = err.response?.data?.error;
+      const errMsg = typeof errorData === 'object' && errorData !== null
+        ? errorData.message || JSON.stringify(errorData)
+        : (errorData || 'Failed to read directory structure from device. Ensure it is connected and readable.');
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -80,7 +84,10 @@ export default function FileExplorer({ onWipeSelect }) {
       setLoadedFolders(prev => ({ ...prev, [folderPath]: true }));
     } catch (err) {
       console.error('[FileExplorer] Failed to load subfolder:', err);
-      const errMsg = err.response?.data?.error || 'Access Denied';
+      const errorData = err.response?.data?.error;
+      const errMsg = typeof errorData === 'object' && errorData !== null
+        ? errorData.message || JSON.stringify(errorData)
+        : (errorData || 'Access Denied');
       setFiles(prevFiles => {
         const updateTree = (nodes) => {
           return nodes.map(node => {

@@ -35,7 +35,10 @@ export default function Login() {
       showNotification('Access authorized. Session key active.', 'success', 'Login Approved');
       navigate(from, { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.error || 'Authentication credentials rejected.';
+      const errorData = err.response?.data?.error;
+      const msg = typeof errorData === 'object' && errorData !== null
+        ? errorData.message || JSON.stringify(errorData)
+        : (errorData || 'Authentication credentials rejected.');
       setError(msg);
       showNotification(msg, 'danger', 'Login Denied');
     } finally {

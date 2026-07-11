@@ -43,7 +43,10 @@ export default function Register() {
       showNotification('Operator key created successfully. You may login.', 'success', 'Registry Key Compiled');
       navigate('/login');
     } catch (err) {
-      const msg = err.response?.data?.error || 'Failed to compile operator credentials.';
+      const errorData = err.response?.data?.error;
+      const msg = typeof errorData === 'object' && errorData !== null
+        ? errorData.message || JSON.stringify(errorData)
+        : (errorData || 'Failed to compile operator credentials.');
       setError(msg);
       showNotification(msg, 'danger', 'Registry Rejected');
     } finally {
