@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://securewipe-backend-l04d.onrender.com/api/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }
