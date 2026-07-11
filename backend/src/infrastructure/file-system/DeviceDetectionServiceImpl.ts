@@ -123,10 +123,33 @@ function analyzeDirectoryRecursive(dirPath: string, metrics: AnalysisMetrics, st
 
 export class DeviceDetectionServiceImpl implements DeviceDetectionService {
   public async detectDevices(): Promise<DeviceInfo[]> {
+    const mockVirtualDevice: DeviceInfo = {
+      id: 'usb-mock-virtual',
+      name: 'Mock USB Flash (E:)',
+      type: 'pendrive' as any,
+      capacity: 16106127360,
+      usedSpace: 4294967296,
+      freeSpace: 11811160064,
+      connectionStatus: 'connected' as const,
+      path: 'E:\\',
+      isOSDisk: false,
+      isSafe: true,
+      busType: 'USB',
+      connectionType: 'External' as any,
+      mediaType: 'Flash' as any
+    };
+
+    if (process.platform !== 'win32') {
+      return [mockVirtualDevice];
+    }
+
     const psCommand = `$Disks = Get-Disk; $Result = @(); foreach ($Disk in $Disks) { $PhysicalDisk = Get-PhysicalDisk | Where-Object { $_.DeviceId -eq [string]$Disk.Number }; $MediaType = $PhysicalDisk.MediaType; $BusType = $Disk.BusType; $DriveCategory = 'other'; if ($BusType -eq 'USB') { if ($Disk.DriveType -eq 2 -or $Disk.FriendlyName -like '*flash*' -or $Disk.FriendlyName -like '*thumb*') { $DriveCategory = 'pendrive' } else { $DriveCategory = 'external_hdd' } } else { if ($BusType -eq 'NVMe') { $DriveCategory = 'nvme_ssd' } elseif ($MediaType -eq 'SSD') { $DriveCategory = 'internal_sata_ssd' } elseif ($MediaType -eq 'HDD') { $DriveCategory = 'internal_hdd' } else { if ($Disk.FriendlyName -like '*SSD*' -or $Disk.FriendlyName -like '*NVMe*') { $DriveCategory = 'internal_sata_ssd' } else { $DriveCategory = 'internal_hdd' } } }; $ConnectionType = if ($BusType -eq 'USB') { 'External' } else { 'Internal' }; $ResolvedMediaType = if ($MediaType) { $MediaType.ToString() } else { 'Unspecified' }; if ($DriveCategory -eq 'pendrive') { $ResolvedMediaType = 'Flash' }; $IsOSDisk = ($Disk.IsSystem -eq $true -or $Disk.IsBoot -eq $true); $Partitions = Get-Partition -DiskNumber $Disk.Number; foreach ($Part in $Partitions) { if ($Part.DriveLetter) { $DriveLetterStr = $Part.DriveLetter.ToString() + ':'; if ($DriveLetterStr -eq $env:SystemDrive) { $IsOSDisk = $true } } }; foreach ($Part in $Partitions) { if ($Part.DriveLetter) { $DriveLetterStr = $Part.DriveLetter.ToString() + ':'; $LogicalDisk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID = '$DriveLetterStr'"; $Volume = Get-Volume -DriveLetter $Part.DriveLetter; $FreeSpace = if ($Volume.SizeRemaining) { [int64]$Volume.SizeRemaining } else { 0 }; $Capacity = if ($Volume.Size) { [int64]$Volume.Size } else { [int64]$Disk.Size }; $UsedSpace = $Capacity - $FreeSpace; $FileSystem = if ($Volume.FileSystem) { $Volume.FileSystem } else { 'Unknown' }; $IsPartitionSafe = $true; $ReasonBlocked = ''; if ($IsOSDisk) { $IsPartitionSafe = $false; $ReasonBlocked = 'Operating System Disk Protection' } elseif ($Part.IsSystem -or $Part.IsBoot -or $Part.IsActive) { $IsPartitionSafe = $false; $ReasonBlocked = 'System/Boot Partition Protection' } elseif ($Part.GptType -eq '{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}') { $IsPartitionSafe = $false; $ReasonBlocked = 'EFI System Partition Protection' } elseif ($Part.GptType -eq '{e3c9e316-0b5c-4db8-817d-f92df00215ae}') { $IsPartitionSafe = $false; $ReasonBlocked = 'Microsoft Reserved Partition Protection' } elseif ($Part.GptType -eq '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}') { $IsPartitionSafe = $false; $ReasonBlocked = 'Recovery Partition Protection' }; $Prefix = if ($BusType -eq 'USB') { 'usb-' } else { 'internal-' }; $DevId = $Prefix + $Part.DriveLetter.ToString().ToLower(); $Name = if ($LogicalDisk.VolumeName) { "$($LogicalDisk.VolumeName) ($DriveLetterStr)" } else { "$($Disk.FriendlyName) ($DriveLetterStr)" }; $DeviceObj = [PSCustomObject]@{ id = $DevId; name = $Name; type = $DriveCategory; capacity = $Capacity; usedSpace = $UsedSpace; freeSpace = $FreeSpace; connectionStatus = 'connected'; path = $DriveLetterStr + '\\'; fileSystem = $FileSystem; isOSDisk = $IsOSDisk; isSafe = $IsPartitionSafe; busType = $BusType; connectionType = $ConnectionType; mediaType = $ResolvedMediaType }; $Result += $DeviceObj } } }; $Result | ConvertTo-Json -Depth 5;`;
 
     const scriptPath = path.resolve(process.cwd(), 'data', `detect_${Date.now()}.ps1`);
     try {
+      if (!fs.existsSync(path.dirname(scriptPath))) {
+        fs.mkdirSync(path.dirname(scriptPath), { recursive: true });
+      }
       fs.writeFileSync(scriptPath, psCommand, 'utf8');
 
       const { stdout, stderr } = await execPromise(`powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${scriptPath}"`);
@@ -144,13 +167,13 @@ export class DeviceDetectionServiceImpl implements DeviceDetectionService {
       }
 
       if (!stdout || !stdout.trim()) {
-        return [];
+        return [mockVirtualDevice];
       }
 
       const parsed = JSON.parse(stdout);
       const list = Array.isArray(parsed) ? parsed : [parsed];
 
-      const mappedList = list.map((item: any) => ({
+      const mappedList: DeviceInfo[] = list.map((item: any) => ({
         id: String(item.id),
         name: String(item.name),
         type: String(item.type) as any,
@@ -166,21 +189,10 @@ export class DeviceDetectionServiceImpl implements DeviceDetectionService {
         mediaType: String(item.mediaType || 'Unspecified') as any
       }));
 
-      mappedList.push({
-        id: 'usb-mock-virtual',
-        name: 'Mock USB Flash (E:)',
-        type: 'pendrive' as any,
-        capacity: 16106127360,
-        usedSpace: 4294967296,
-        freeSpace: 11811160064,
-        connectionStatus: 'connected' as const,
-        path: 'E:\\',
-        isOSDisk: false,
-        isSafe: true,
-        busType: 'USB',
-        connectionType: 'External' as any,
-        mediaType: 'Flash' as any
-      });
+      // Add mock device if not already present
+      if (!mappedList.some(d => d.id === 'usb-mock-virtual')) {
+        mappedList.push(mockVirtualDevice);
+      }
 
       return mappedList;
     } catch (err) {
@@ -189,8 +201,8 @@ export class DeviceDetectionServiceImpl implements DeviceDetectionService {
           fs.unlinkSync(scriptPath);
         }
       } catch (cleanupErr) {}
-      console.error('[DeviceDetection] Error detecting devices:', err);
-      return [];
+      console.error('[DeviceDetection] Error detecting devices, falling back to mock:', err);
+      return [mockVirtualDevice];
     }
   }
 

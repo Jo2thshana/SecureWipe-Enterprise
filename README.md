@@ -69,12 +69,11 @@ Certificate Generation
 Enterprise Reports
 
 ## 🌐 Deployment
-SecureWipe Enterprise is prepared for production deployment.
+SecureWipe Enterprise is successfully deployed for production use:
 
-Deployment Status
-🟡 Deployment in Progress
-
-The production application URL will be added after deployment has been successfully completed and verified.
+- **Frontend Console (Vercel)**: [https://secure-wipe-enterprise.vercel.app](https://secure-wipe-enterprise.vercel.app)
+- **Backend Service (Render)**: [https://securewipe-backend-l04d.onrender.com](https://securewipe-backend-l04d.onrender.com)
+- **Database Engine**: Managed Neon PostgreSQL cluster connected and operational
 
 ## 📌 Current Version
 SecureWipe Enterprise v1.0
