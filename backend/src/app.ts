@@ -25,7 +25,10 @@ const PORT = process.env.PORT || 5000;
 // Security Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite standard React port
+  origin: [
+    'http://localhost:5173',
+    'https://secure-wipe-enterprise.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
